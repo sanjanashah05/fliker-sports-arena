@@ -4,8 +4,11 @@ import { Button } from '@/components/ui/button';
 import BottomNav from '@/components/BottomNav';
 import LiveMatchCard from '@/components/LiveMatchCard';
 import { ChevronRight } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Home: React.FC = () => {
+  const { profile } = useAuth();
+  
   const handleMatchClick = (matchId: string) => {
     console.log(`Clicked on match: ${matchId}`);
   };
@@ -15,7 +18,12 @@ const Home: React.FC = () => {
       {/* Header */}
       <div className="bg-primary text-white py-4 px-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold">Fliker</h1>
+          <div>
+            <h1 className="text-xl font-bold">Fliker</h1>
+            {profile && (
+              <p className="text-sm opacity-90">Welcome, {profile.full_name}</p>
+            )}
+          </div>
           <div className="flex items-center space-x-2">
             <Button variant="ghost" size="sm" className="text-white">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

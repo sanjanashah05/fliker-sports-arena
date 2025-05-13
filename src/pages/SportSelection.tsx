@@ -1,16 +1,97 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Logo from '@/components/Logo';
 import SportCard from '@/components/SportCard';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
+import { Loader2 } from 'lucide-react';
 
 const SportSelection: React.FC = () => {
   const navigate = useNavigate();
+  const { user, profile } = useAuth();
+  const [selectedSport, setSelectedSport] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSportSelect = (sport: string) => {
-    console.log(`Selected sport: ${sport}`);
-    navigate('/home');
+  // Get preferred sport from user preferences if available
+  useEffect(() => {
+    const loadUserSports = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('user_sports')
+          .select('sport_id')
+          .eq('user_id', user.id)
+          .limit(1);
+          
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          setSelectedSport(data[0].sport_id);
+        }
+      } catch (error) {
+        console.error('Error loading user sports:', error);
+      }
+    };
+    
+    loadUserSports();
+  }, [user]);
+
+  const handleSportSelect = async (sport: string) => {
+    try {
+      setIsLoading(true);
+      setSelectedSport(sport);
+      
+      if (!user) {
+        navigate('/home');
+        return;
+      }
+      
+      // Save selected sport as preference
+      // Check if user already has this sport in preferences
+      const { data: existingData, error: checkError } = await supabase
+        .from('user_sports')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('sport_id', sport)
+        .maybeSingle();
+        
+      if (checkError) throw checkError;
+      
+      // If not already in preferences, add it
+      if (!existingData) {
+        const { error: insertError } = await supabase
+          .from('user_sports')
+          .insert({
+            user_id: user.id,
+            sport_id: sport
+          });
+          
+        if (insertError) throw insertError;
+      }
+      
+      // Navigate to home page
+      navigate('/home');
+    } catch (error: any) {
+      toast({
+        title: "Error saving preference",
+        description: error.message || "There was a problem saving your sport preference.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-muted">
@@ -33,6 +114,7 @@ const SportSelection: React.FC = () => {
             }
             color="bg-primary-100 text-primary-600"
             onClick={() => handleSportSelect('cricket')}
+            active={selectedSport === 'cricket'}
           />
           
           <SportCard
@@ -46,6 +128,7 @@ const SportSelection: React.FC = () => {
             }
             color="bg-secondary-100 text-secondary-600"
             onClick={() => handleSportSelect('kabaddi')}
+            active={selectedSport === 'kabaddi'}
           />
           
           <SportCard
@@ -58,6 +141,7 @@ const SportSelection: React.FC = () => {
             }
             color="bg-accent-100 text-accent-600"
             onClick={() => handleSportSelect('basketball')}
+            active={selectedSport === 'basketball'}
           />
           
           <SportCard
@@ -71,6 +155,7 @@ const SportSelection: React.FC = () => {
             }
             color="bg-blue-100 text-blue-600"
             onClick={() => handleSportSelect('football')}
+            active={selectedSport === 'football'}
           />
         </div>
         
