@@ -1,8 +1,7 @@
 
-import React from 'react';
-import { createRoot } from 'react-dom/client';
-import App from './App.tsx';
-import './index.css';
+import { createRoot } from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
 
 // Check for user's preferred color scheme at initial load
 if (localStorage.getItem('fliker-theme') === 'dark' || 
@@ -12,8 +11,4 @@ if (localStorage.getItem('fliker-theme') === 'dark' ||
   document.documentElement.classList.remove('dark');
 }
 
-createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+createRoot(document.getElementById("root")!).render(<App />);
